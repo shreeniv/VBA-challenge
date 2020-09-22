@@ -1,0 +1,99 @@
+Sub stock():
+    Dim total As Double
+    Dim change As double
+    Dim percent As double
+    Dim j As integer
+
+    Dim Start As long
+    dim ws as WorkSheet
+    dim RowCount as long
+
+'start of loop for going over different sheets within the same excel
+For Each ws In Worksheets
+    
+    'declaring variables where 'total' is the Total stock volume of the stock in the output excel
+    ''change' is the Yearly change from opening price at the beginning of a given year to the closing price at the end of that year.
+    ''percent' is The percent change from opening price at the beginning of a given year to the closing price at the end of that year.
+    
+    
+        
+   'Initializing some of the varialbles
+    j = 0
+    Start = 2
+    'NonZeroOpen = 0
+    change = 0
+    total = 0
+    
+    'creating column headers for the calulations to be done
+    ws.Range("I1").Value = "Ticker"
+    ws.Range("J1").Value = "Yearly Change"
+    ws.Range("K1").Value = "Change Percentage"
+    ws.Range("l1").Value = "Total Volume"
+    ws.Range("P1").Value = "Ticker"
+    ws.Range("Q1").Value = "Value"
+    ws.Range("O2").Value = "Greater % Increase"
+    ws.Range("O3").Value = "Greater % Decrease"
+    ws.Range("O4").Value = "Greatest Total Volume"
+    
+    'logic to find the last row of the excel that has data
+    RowCount = ws.Cells(Rows.Count, "A").End(xlUp).Row
+    For i = 2 To RowCount
+    
+    'logic to compare the last cell where the ticker value changes and do the math for calculating total volume
+        If ws.Cells(i + 1, 1).Value <> ws.Cells(i, 1).Value Then
+            total = total + ws.Cells(i, 7).Value
+            ws.Range("L" & 2 + j).Value = total
+            ws.Range("I" & 2 + j).Value = ws.Cells(i, 1).Value
+    
+    'logic to find the last day's closing and first day's opening - and making sure that the non-zero value is captured
+            If ws.Cells(Start, 3).Value = 0 Then
+                For NonZeroOpen = Start To i
+                    If ws.Cells(NonZeroOpen, 3).Value <> 0 Then
+                        Start = NonZeroOpen
+                        Exit For
+                    End If
+               Next NonZeroOpen
+            End If
+    
+    'Capturing the values for 'Change and percent columns
+            change = ws.Cells(i, 6) - ws.Cells(Start, 3)
+            percent = round((change / ws.Cells(Start, 3)*100),2)
+            ws.Range("J" & 2 + j).Value = change
+            ws.Range("K" & 2 + j).Value = percent
+            ws.Cells(i, 11).NumberFormat = "0.00%"
+            Start = i + 1
+    
+    'Conditional color formatting for Change column
+            If change > 0 Then
+                ws.Range("J" & 2 + j).Interior.ColorIndex = 4
+            Else
+                ws.Range("J" & 2 + j).Interior.ColorIndex = 3
+            End If
+            
+            Start = Start + 1
+            j = j + 1
+            total = 0
+            change = 0
+        Else
+            total = total + ws.Cells(i, 7).Value
+            
+        End If
+        
+    Next i
+
+'Logic to calculate the items in Challenges Section
+ws.Range("Q2").Value = WorksheetFunction.Max(ws.Range("K2:K" & RowCount))
+ws.Range("Q3").Value = WorksheetFunction.Min(ws.Range("K2:K" & RowCount))
+ws.Range("Q4").Value = WorksheetFunction.Max(ws.Range("L2:L" & RowCount))
+
+'Finding Matching ticker for Challenges section
+Greatest_Increase = WorksheetFunction.Match(WorksheetFunction.Max(ws.Range("K2:K" & RowCount)), ws.Range("K2:K" & RowCount), 0)
+ws.Range("P2") = ws.Cells(Greatest_Increase + 1, 9)
+Greatest_Decrease = WorksheetFunction.Match(WorksheetFunction.Min(ws.Range("K2:K" & RowCount)), ws.Range("K2:K" & RowCount), 0)
+ws.Range("P3") = ws.Cells(Greatest_Decrease + 1, 9)
+Greatest_Volume = WorksheetFunction.Match(WorksheetFunction.Max(ws.Range("L2:L" & RowCount)), ws.Range("L2:L" & RowCount), 0)
+ws.Range("P4") = ws.Cells(Greatest_Volume + 1, 9)
+
+Next ws
+
+End Sub
